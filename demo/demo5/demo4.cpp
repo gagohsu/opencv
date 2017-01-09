@@ -50,9 +50,7 @@ using namespace cv;
 #	endif
 #endif
 
-
-
-int main(int argc, char* argv[])
+void creat_H(string inputfilename2d,string inputfilename3d,string ouputfilename)
 {
 	fstream fs;
 	vector <Point2d> n2;
@@ -61,14 +59,12 @@ int main(int argc, char* argv[])
 	Mat src,dist,eigenvectors;
 	
 	vector < vector<double> > one;
-	vector<double> two ;
-	namedWindow("L000.bmp", WINDOW_AUTOSIZE);
-	IplImage *image,*image2,*image3,*image4; 
+	vector<double> two ; 
 	double tmp,min;
 	double m1[12][12] ,h[3][4];
 	int ind=0;
 
-	fs.open("lcalib.p2d",fstream::in);
+	fs.open(inputfilename2d,fstream::in);
 	while(fs>>a>>b)
 	{
 		if(a==0&&b==0)break;
@@ -76,7 +72,7 @@ int main(int argc, char* argv[])
 		
 	}
 	fs.close();
-	fs.open("lcalib.p3d",fstream::in);
+	fs.open(inputfilename3d,fstream::in);
 	while(fs>>a>>b>>c)
 	{
 		if(a==0&&b==0&&c==0)break;
@@ -145,70 +141,116 @@ int main(int argc, char* argv[])
 			ind=i;
 		}
 	}
-	cout<<min<<endl;
+	//cout<<min<<endl;
 	for(int i = 0; i<12;i++)
 	{
 		h[i/4][i%4]=eigenvectors.at<double>(ind,i);
 	}
-	fs.open("m.txt",ios::out);
+	fs.open(ouputfilename,ios::out);
 	for(int i = 0;i<3;i++)
 	{
 		for(int j = 0 ; j<4 ;j++)
 		{
-			cout<<setw(15)<<h[i][j];
+		//	cout<<setw(15)<<h[i][j];
 			fs<<setw(15)<<h[i][j];
 		}
-		cout<<endl;
+		//cout<<endl;
 		fs<<endl;
 	}
 	fs.close();
-	image = cvLoadImage("L000.bmp",CV_LOAD_IMAGE_UNCHANGED);
-	image2 = cvLoadImage("L100.bmp",CV_LOAD_IMAGE_UNCHANGED);
-	image3 = cvLoadImage("L200.bmp",CV_LOAD_IMAGE_UNCHANGED);
-	image4 = cvLoadImage("L300.bmp",CV_LOAD_IMAGE_UNCHANGED);
-	Mat aimgmat(image, 0),imgmat;
-	Mat aimgmat2(image2, 0),imgmat2;
-	Mat aimgmat3(image3, 0),imgmat3;
-	Mat aimgmat4(image4, 0),imgmat4;
-	cvtColor(aimgmat,imgmat,CV_GRAY2BGR);
-	cvtColor(aimgmat2,imgmat2,CV_GRAY2BGR);
-	cvtColor(aimgmat3,imgmat3,CV_GRAY2BGR);
-	cvtColor(aimgmat4,imgmat4,CV_GRAY2BGR);
-	double n3x,n3y;
-	for(int i =0 ; i<n3.size();i++)
+}
+void printMat(Mat M)
+{
+	for(int i = 0; i < M.rows; i++)
 	{
-		n3x=(n3[i].x*h[0][0]+n3[i].y*h[0][1]+n3[i].z*h[0][2]+h[0][3])/(n3[i].x*h[2][0]+n3[i].y*h[2][1]+n3[i].z*h[2][2]+h[2][3]);
-		n3y=(n3[i].x*h[1][0]+n3[i].y*h[1][1]+n3[i].z*h[1][2]+h[1][3])/(n3[i].x*h[2][0]+n3[i].y*h[2][1]+n3[i].z*h[2][2]+h[2][3]);
-		if(n3[i].z<90)
-		{
-			circle(imgmat,Point2d(n2[i].x,n2[i].y),3,Scalar( 0, 0, 255 ),-1);	
-			circle(imgmat,Point2d(n3x,n3y),3,Scalar( 0, 255, 255 ),-1);
-		}
-		else if(n3[i].z<190)
-		{
-			circle(imgmat2,Point2d(n2[i].x,n2[i].y),3,Scalar( 0, 0, 255 ),-1);	
-			circle(imgmat2,Point2d(n3x,n3y),3,Scalar( 0, 255, 255 ),-1);
-		}
-		else if(n3[i].z<290)
-		{
-			circle(imgmat3,Point2d(n2[i].x,n2[i].y),3,Scalar( 0, 0, 255 ),-1);	
-			circle(imgmat3,Point2d(n3x,n3y),3,Scalar( 0, 255, 255 ),-1);
-		}
-		else if(n3[i].z<390)
-		{
-			circle(imgmat4,Point2d(n2[i].x,n2[i].y),3,Scalar( 0, 0, 255 ),-1);	
-			circle(imgmat4,Point2d(n3x,n3y),3,Scalar( 0, 255, 255 ),-1);
-		}
-
-		
+		const double* Mi = M.ptr<double>(i);
+		for(int j = 0; j < M.cols; j++)
+			cout<<Mi[j]<<'\t';
+		cout<<endl;
 	}
-	imshow("L000.bmp", imgmat);
-	imshow("L100.bmp", imgmat2);
-	imshow("L200.bmp", imgmat3);
-	imshow("L300.bmp", imgmat4);
-	cvWaitKey(0); 
+}
 
-	cin>>a;
+void creat_f(string h1file,string h2file,string ouputfilename)
+{
+	Mat h1,h2,c1,c2,MP1,Mp1,MP2,Mp2,C1,e,e2x,f;
+	fstream fs;
+	double num;
+	double dh1[3][4],dh2[3][4],P1[3][3],p1[3][1],P2[3][3],p2[3][1];
+	fs.open(h1file,fstream::in);
+	int i=0;
+	while(fs>>num)
+	{
+		dh1[i/4][i%4]=num;
+		if(i%4==3)p1[i/4][0]=num;
+		else
+			P1[i/4][i%4]=num;
+		i++;
+	}
+	fs.close();
+	fs.open(h2file,fstream::in);
+	i=0;
+	while(fs>>num)
+	{
+		dh2[i/4][i%4]=num;
+		if(i%4==3)p2[i/4][0]=num;
+		else
+			P2[i/4][i%4]=num;
+		i++;
+	}
+	fs.close();
+	h1 = Mat(3,4,CV_64F,dh1);
+	h2 = Mat(3,4,CV_64F,dh2);
+	MP1 = Mat(3, 3, CV_64F, P1);
+	Mp1 = Mat(3, 1, CV_64F, p1);
+	MP2 = Mat(3, 3, CV_64F, P2);
+	Mp2 = Mat(3, 1, CV_64F, p2);
+	C1 = -MP1.inv()*Mp1;
+	//cout<<endl;
+	Mat tmp = Mat(1, 1, CV_64F,1);
+	C1.push_back(tmp);
+	e=h2*C1;
+	double e2xtmp[3][3]={{0,-e.at<double>(2,0),e.at<double>(1,0)},{e.at<double>(1,0),0,-e.at<double>(0,0)},{-e.at<double>(1,0),e.at<double>(0,0),0}};
+	e2x=Mat(3, 3, CV_64F, e2xtmp);
+	f=e2x*MP2*MP1.inv();
+	fs.open(ouputfilename,ios::out);
+	for(int i = 0; i < f.rows; i++)
+	{
+		const double* Mi = f.ptr<double>(i);
+		for(int j = 0; j < f.cols; j++)
+			fs<<setw(15)<<Mi[j];
+		fs<<endl;
+	}
+	fs.close();
+}
+void demo(string Ffilename)
+{
+
+
+}
+int main(int argc, char* argv[])
+{
+	//write h into file  
+	/*
+	creat_H("lcalib.p2d","lcalib.p3d","l_H.txt");
+	creat_H("rcalib.p2d","rcalib.p3d","r_H.txt");
+	*/
+
+	
+	//read h from file
+	//creat_f("l_H.txt","r_H.txt","f.txt");
+	
+
+
+
+	int q;
+	cin>>q;
+	//cvWaitKey(0); 
 	return 0;
 }
+
+
+
+
+
+
 

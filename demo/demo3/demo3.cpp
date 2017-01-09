@@ -156,27 +156,7 @@ int main(int argc, char* argv[])
 			cout<<setw(12)<<h[i][j];
 		cout<<endl;
 	}
-	image = cvLoadImage("L000.bmp",CV_LOAD_IMAGE_UNCHANGED);
 	
-	Mat aimgmat(image, 0),imgmat;
-	cvtColor(aimgmat,imgmat,CV_GRAY2BGR);
-	for(int i = 0 ; i<n2.size();i++)
-	{
-		circle(imgmat,Point2d(n2[i].x,n2[i].y),3,Scalar( 0, 0, 255 ),-1);
-	}
-	double n3x,n3y;
-	for(int i =0 ; i<n3.size();i++)
-	{
-		n3x=(n3[i].x*h[0][0]+n3[i].y*h[0][1]+n3[i].z*h[0][2]+h[0][3])/(n3[i].x*h[2][0]+n3[i].y*h[2][1]+n3[i].z*h[2][2]+h[2][3]);
-		n3y=(n3[i].x*h[1][0]+n3[i].y*h[1][1]+n3[i].z*h[1][2]+h[1][3])/(n3[i].x*h[2][0]+n3[i].y*h[2][1]+n3[i].z*h[2][2]+h[2][3]);
-		circle(imgmat,Point2d(n3x,n3y),3,Scalar( 0, 255, 255 ),-1);
-	
-	
-	}
-	imshow("L000.bmp", imgmat);
-	//cvShowImage("L000.bmp", image);
-	cvWaitKey(0); 
-
 	cin>>a;
 	return 0;
 }
