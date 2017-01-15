@@ -51,6 +51,18 @@ using namespace cv;
 int ptx,pty;
 bool drawc=false;
 int DiameterSlider =116;
+string win_in("Input"), win_out("Output");
+Mat f1,i1,i2;
+void printMat(Mat M)
+{
+	for(int i = 0; i < M.rows; i++)
+	{
+		const double* Mi = M.ptr<double>(i);
+		for(int j = 0; j < M.cols; j++)
+			cout<<Mi[j]<<'\t';
+		cout<<endl;
+	}
+}
 void create_img(int DiameterSlider,string das,string ouputfilename,string ouputtxtname){
 	cout<<"creat_img__"<<das<<endl;
 	Mat image,image2,image3;
@@ -141,8 +153,12 @@ void creat_f(string h1file,string h2file,string ouputfilename)
 	//cout<<endl;
 	Mat tmp = Mat(1, 1, CV_64F,1);
 	C1.push_back(tmp);
+	//Mat try1=h1*C1;
+	//printMat(try1);
+	//cin>>num;
 	e=h2*C1;
-	double e2xtmp[3][3]={{0,-e.at<double>(2,0),e.at<double>(1,0)},{e.at<double>(1,0),0,-e.at<double>(0,0)},{-e.at<double>(1,0),e.at<double>(0,0),0}};
+	
+	double e2xtmp[3][3]={{0,-e.at<double>(2,0),e.at<double>(1,0)},{e.at<double>(2,0),0,-e.at<double>(0,0)},{-e.at<double>(1,0),e.at<double>(0,0),0}};
 	e2x=Mat(3, 3, CV_64F, e2xtmp);
 	f=e2x*MP2*MP1.inv();
 	fs.open(ouputfilename,ios::out);
@@ -157,16 +173,7 @@ void creat_f(string h1file,string h2file,string ouputfilename)
 	cout<<"finish create file"<<endl;
 }
 
-void printMat(Mat M)
-{
-	for(int i = 0; i < M.rows; i++)
-	{
-		const double* Mi = M.ptr<double>(i);
-		for(int j = 0; j < M.cols; j++)
-			cout<<Mi[j]<<'\t';
-		cout<<endl;
-	}
-}
+
 void creat_H(string inputfilename2d,string inputfilename3d,string ouputfilename)
 {
 	cout<<"creat_H"<<endl;
@@ -280,11 +287,11 @@ void creat_H(string inputfilename2d,string inputfilename3d,string ouputfilename)
 void MouseTouchEvent(int event, int x, int y, int flags, void* userdata);
 void demo(string rimg ,string limg,string filename){
 
-	string win_in("Input"), win_out("Output");
+
 	namedWindow(win_in, 0);  
 	namedWindow(win_out, 0);
-	resizeWindow(win_in,600,600);
-	resizeWindow(win_out,600,600);
+	resizeWindow(win_in,640,512);
+	resizeWindow(win_out,640,512);
 		 bool bQuit = false;
 		 double f[3][3];
 		 double tmp;
@@ -297,35 +304,14 @@ void demo(string rimg ,string limg,string filename){
 				f[i][j]=tmp;
 			}
 
-		Mat f1;
+		
 		f1 = Mat(3,3,CV_64F,f);
-		printMat(f1);
-		Mat i1=imread(rimg), i2=imread(limg);
+		//printMat(f1);
+		i1=imread(rimg);
+		i2=imread(limg);
 		while(!bQuit)
 		{
 			setMouseCallback(win_in, MouseTouchEvent, NULL);
-			if(drawc)
-			{
-				cout<<ptx<<pty<<endl;
-				Mat pt,pt2,t,t2;
-				double p[3][1]={{ptx},{pty},{1}};
-				pt=Mat(3,1,CV_64F,p);
-				t=f1*pt;
-				double u,v,v2,u2;
-				u=-t.at<double>(2,0)/t.at<double>(0,0);
-				v=-t.at<double>(2,0)/t.at<double>(1,0);
-				line(i2 ,Point2d(u,0),Point2d(0,v),cv::Scalar( 0, 0, 255 ),  3);
-				double p2[3][1]={{u},{0},{1}};
-				pt2=Mat(3,1,CV_64F,p2);
-				t2=f1.t()*pt2;
-				u2=-t2.at<double>(2,0)/t2.at<double>(0,0);
-				v2=-t2.at<double>(2,0)/t2.at<double>(1,0);
-				line(i1 ,Point2d(u2,0),Point2d(0,v2),cv::Scalar( 0, 0, 255 ),  3);
-				cout<<t.at<double>(2,0)/t.at<double>(0,0)<<" "<<t.at<double>(2,0)/t.at<double>(1,0)<<endl;
-			}
-			imshow(win_out,i2);
-			imshow(win_in,i1);
-			drawc=false;
 			switch (cv::waitKey(1)) {
 					case 27: // ESC
 							bQuit = true;
@@ -339,12 +325,31 @@ void MouseTouchEvent(int event, int x, int y, int flags, void* userdata)
 {
 	if  ( event == cv::EVENT_LBUTTONUP )
 	{
-		 ptx = x;
-		 pty = y;
-		 drawc=true;
+		ptx=x;
+		pty=y;
+		//cout<<ptx<<" "<<pty<<endl;
+		Mat pt,pt2,t,t2;
+		double p[3][1]={{ptx},{pty},{1}};
+		pt=Mat(3,1,CV_64F,p);
+		t=f1*pt;
+		Point2d p1,p2;
+		p1.x=0;
+		p1.y=-t.at<double>(2,0)/t.at<double>(1,0);
+		p2.x=1279;
+		p2.y=-(t.at<double>(2,0)+1279*t.at<double>(0,0))/t.at<double>(1,0);
+		line(i2 ,p1,p2,cv::Scalar( 0, 0, 255 ),  3);
+		double p2d[3][1]={{p1.x},{p1.y},{1}};
+		pt2=Mat(3,1,CV_64F,p2d);
+		t2=f1.t()*pt2;
+		p1.x=0;
+		p1.y=-t2.at<double>(2,0)/t2.at<double>(1,0);
+		p2.x=1279;
+		p2.y=-(t2.at<double>(2,0)+1279*t2.at<double>(0,0))/t2.at<double>(1,0);
+		line(i1 ,p1,p2,cv::Scalar( 0, 0, 255 ),  3);
+		imshow(win_out,i2);
+		imshow(win_in,i1);
+		cv::waitKey(1);
      }
-	
-
 }
 int main(int argc, char* argv[])
 {
